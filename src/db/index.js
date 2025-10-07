@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { DB_NAME } from "../constants";
+import { DB_NAME } from "../constants.js";
 
 // appraoch db folder mai database connect ka code likh do and usko at the end index.js mai export krdo jisse code thora clean lage
 // since, database can be in another continent better always use async await
