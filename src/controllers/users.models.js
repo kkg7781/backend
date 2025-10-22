@@ -107,5 +107,7 @@ payloads are passed here and they are thenb further converted to jwt tokens
 Refresh tokens usually live longer — days to months (e.g., "7d", "30d").
 
 Server can store refresh tokens to enable revocation (storing in DB).
+file upload logic hm log pehle through multer apne system mai temporarily file store rakhenge 
+fhir usko cloudinary mai store krwa denge . this will help us to alteast have access of desired file in ase any thing happens
 
  */ 
