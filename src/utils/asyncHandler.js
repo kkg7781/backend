@@ -1,6 +1,6 @@
  // ek higher order function declare kr rhe jo fn as parameter accept kare
 
-const asyncHnadler=(func)=>async(req,res,next)=>{
+const asyncHandler=(func)=>async(req,res,next)=>{
 try {
     await(req,res,next)
 } catch (error) {
@@ -14,4 +14,4 @@ try {
 
 
 
-export default asyncHandler
+export { asyncHandler}
