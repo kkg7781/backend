@@ -10,6 +10,7 @@ const storage = multer.diskStorage({
 })
 
 const upload = multer({ storage })
+export {upload};
 /*
 }
 This callback defines the folder path where uploaded files will be saved.
