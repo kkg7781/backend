@@ -18,7 +18,7 @@ app.use(cookieParser())      // cookie parser help krta hai user cookis mai crud
 import userRouter from './routes/users.routes.js'
 
 //router declaration
-app.use("api/vi//users", userRouter)
+app.use("/api/vi/users", userRouter)
 // url will be like localhost:8000//users/register or something something
 
 

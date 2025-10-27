@@ -1,17 +1,14 @@
- // ek higher order function declare kr rhe jo fn as parameter accept kare
+ // ek higher order function declare k
+ // utils/asyncHandler.js
+const asyncHandler = (func) => async (req, res, next) => {
+  try {
+    await func(req, res, next); // ✅ actually call the function
+  } catch (error) {
+    res.status(error.code || 500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+};
 
-const asyncHandler=(func)=>async(req,res,next)=>{
-try {
-    await(req,res,next)
-} catch (error) {
-    res.status(error.code).json({
-        sucess : false,
-        message :error.message
-    })
-    
-}
-}
-
-
-
-export { asyncHandler}
+export { asyncHandler };
