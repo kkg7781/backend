@@ -3,6 +3,8 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
+import { User } from "../models/users.models.js";
+
 //onst asyncHandler={asyncHandler}
 
 const registerUser=asyncHandler(async(req,res)=>{
@@ -16,7 +18,9 @@ const registerUser=asyncHandler(async(req,res)=>{
    // check for user creation
    // return respond
    const {username,email,fullname,password } = req.body;
-   console.log("username :", username);
+   //console.log("username :", username);
+   console.log("FILES:", req.files);
+console.log("BODY:", req.body);
    if([username,email,password].some((field)=>
     field?.trim()===""
    )
@@ -27,7 +31,7 @@ const registerUser=asyncHandler(async(req,res)=>{
 
    // checking if user with specific username or email already exists or not
 
-   const isUserRegistered=User.findOne({
+   const isUserRegistered=await User.findOne({
 $or :[{email}, {username}]
 
    })
@@ -37,7 +41,7 @@ $or :[{email}, {username}]
 
 // checking for images and avatars
 const avatarLocalPath=  req.files?.avatar[0]?.path;
-const coverImageLocalPath=req.files?.avatar[0]?.path;
+const coverImageLocalPath=req.files?.coverImage[0]?.path;
 
 if(!avatarLocalPath){
   throw new ApiError(400, "avatar field is required")  // // since in data modelling we have given avatar field as reuired:true
@@ -52,7 +56,7 @@ if(!avatar){
   throw new ApiError(400, "avatar field is required")
   }  // since in data modelling we have given avatar field as required:true
 
-  User.create({
+ const user= await User.create({
 
     fullname,
     email,
@@ -66,6 +70,7 @@ if(!avatar){
   const createdUser=await User.findById(user._id).select (
     "-password -refreshToken"
   )
+  
   return res.status(201).json(
     new ApiResponse(200, createdUser, "User registered successfully")
   )

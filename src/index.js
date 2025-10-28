@@ -7,7 +7,7 @@ import connectDB from "./db/index.js";
 import app from "./app.js";
 dotenv.config(
     {
-        path:"./env" // config ek object leta hai jo batata hai ki env variables konse path me hai like yaaha root ke andar .env me h
+        path:"./.env" // config ek object leta hai jo batata hai ki env variables konse path me hai like yaaha root ke andar .env me h
     }
 )
 
