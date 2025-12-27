@@ -19,3 +19,12 @@ const connectDB= async ()=>{
 }
 
 export default connectDB
+
+/*
+additional notes
+process  is a global node js object  that represents our currently running node process
+process.exit tells node server to exit the current process immediately
+in case of error this helps to stop the server from listening and hereby preventing the server  from crashing
+again an again
+
+*/

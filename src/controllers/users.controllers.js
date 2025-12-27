@@ -4,8 +4,28 @@ import { ApiResponse } from "../utils/apiResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
 import { User } from "../models/users.models.js";
+import jwt from "jsonwebtoken"
 
 //onst asyncHandler={asyncHandler}
+const generateAccessAndRefreshToken=async (userId)=>{  
+  try {
+    const user= await User.findById(userId)
+    const accessToken=user.generateAccessToken()   // this method in general is used to generte access and refresh tokens
+const refreshToken=user.generateRefreshToken()
+//iss point tk access and refresh token generate ho chuka h and after hume refresh token ko database mai bhi save karana hoga 
+// so h=that hume baar baar user se nhi maagna pade
+user.refreshToken=refreshToken;
+await user.save({ValidateBeforeSave :false});
+
+
+return {accessToken,refreshToken}
+    
+  } catch (error) {
+    throw new ApiError(500, "Something went wrong while generating access and refresh tokens")
+    
+  }
+
+}
 
 const registerUser=asyncHandler(async(req,res)=>{
    // get user details from frontend (in our case we will use postman to send data)
@@ -21,6 +41,8 @@ const registerUser=asyncHandler(async(req,res)=>{
    //console.log("username :", username);
    console.log("FILES:", req.files);
 console.log("BODY:", req.body);
+
+
    if([username,email,password].some((field)=>
     field?.trim()===""
    )
@@ -78,9 +100,149 @@ if(!avatar){
 
 })
 
+const loginUser=asyncHandler(async(req,res)=>{
+//steps req.body->data
+//username or email
+//find the user
+// password check
+//access and refresh token
+//send cookie
+
+const {email,username,password}=req.body;
+if(!(username || email)){
+  throw new ApiError(401, "Please enter username or email");
+}
+const user= await User.findOne({
+  $or :[{username}, {email}]
+})
+if(!user){
+  throw new ApiError(404, "User credentials not found");
+}
+const isPasswordCorrect= await user.isPasswordCorrect(password);
+if(!isPasswordCorrect){
+  throw new ApiError(400, "password doesnt match")
+}
+
+const {accessToken,refreshToken}= await generateAccessAndRefreshToken(user._id);
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+    const options={
+      httpOnly:true,  //this ensures that the refresh token which i will send cannot be modified from frontend or client side
+
+      secure:true,
+    }
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken,options)
+    .cookie("refreshToken",refreshToken,options)
+    json(
+      new ApiResponse(
+        200,
+        {
+          loggedInUser,accessToken,refreshToken   //ye isliye de rhe cause just in case user wants ki mai khud local storage
+          // mai set kare access and refresh token ko latthough not a very good practice but still its his choice!
+        },
+        "User logged in successfully"
+      )
+    )
+
+
+
+})
+
+const logoutUser=asyncHandler(async(req,res)=>{
+await User.findByIdAndUpdate(
+  req.user._id,{
+  $set:{
+    refreshToken:undefined,
+  }
+  },
+{
+  new:true,  //By default, findOneAndUpdate() returns the document as it was before update was applied. 
+    // If you set new: true, findOneAndUpdate() will instead give you the object after update was applied.
+}
+)
+const options={
+httpOnly:true,
+secure:true,
+}
+ return res.status(200)
+ .clearCookie("accessToken",options)
+ .clearCookie("refreshToken",options)
+ .json(
+  "User logged out successfully"
+ )
+
+})
+
+const refreshAccessToken=asyncHandler(async(req,res)=>{
+const incomingRefreshToken=req.cookie?.refreshToken || req.body
+if(!incomingRefreshToken){
+  throw new ApiError(401, "Unauthorised access")
+}
+try {
+  const decodedToken=jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+  
+  const user =await User.findById(decodedToken._id)
+  if(!user){
+    throw new ApiError(401, "Invalid refresh Token")
+  }
+
+  if(incomingRefreshToken!=user.refreshToken){
+    throw new ApiError(401, "Refresh token is expired")
+  }
+  const options={
+    httpOnly:true,
+    secure:true
+  }
+  const {accessToken,newRefreshToken}=await generateAccessAndRefreshToken(user._id)
+  res.
+  status(200)
+  .cookie("accessToken", accessToken,options)
+    .cookie("refreshToken",newRefreshToken,options)
+    json(
+      new ApiResponse(
+        200,
+      {accessToken, refreshToken: newRefreshToken},
+                "Access token refreshed"
+      )
+    )
+
+
+
+  
+} catch (error) {
+  throw new ApiError(401, error?.message || "Invalid refresh token")
+}
+
+})
+
+
+
 export {
     registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken
+
 }
+/*6️⃣ Correct mental model (use this forever)
+🔹 Model vs Document
+User      → collection level (STATIC)
+user      → document level (INSTANCE)
+
+🔹 Who does what?
+Operation	Use
+Find user	User.findOne()
+Create user	User.create()
+Check password	user.isPasswordCorrect()
+Access fields	user.email
+/*
+
+
+
+
 
 
 

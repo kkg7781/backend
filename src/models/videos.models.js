@@ -40,3 +40,11 @@ owner:{
 {timestamps:true})
 videoSchema.plugin(mongooseAggregatePaginate)
 export const Video=mongoose.model("Video", videoSchema)
+// additional notes on plugins and pipelines
+//videoSchema → a Mongoose schema (for a Video collection)
+
+//.plugin() → Mongoose method to extend schema functionality
+
+//mongooseAggregatePaginate → a plugin that adds pagination methods for aggregation queries
+
+//👉 After this line, your Video model can paginate aggregate() results, not just normal find() queries.
