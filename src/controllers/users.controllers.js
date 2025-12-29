@@ -6,7 +6,7 @@ import { cloudinaryUpload } from "../utils/cloudinary.js";
 import { User } from "../models/users.models.js";
 import jwt from "jsonwebtoken"
 
-//onst asyncHandler={asyncHandler}
+//const asyncHandler={asyncHandler}
 const generateAccessAndRefreshToken=async (userId)=>{  
   try {
     const user= await User.findById(userId)
@@ -217,6 +217,28 @@ try {
 }
 
 })
+
+const changeCurrentPassword=asyncHandler(async(req,res)=>{
+const {oldPaswword, newPassword}=req.body
+
+const id=req.user?._id
+const user=await User.findById(id)
+
+const isOldPasswordCorrect= await user.isPasswordCorrect(oldPaswword)
+if(!isOldPasswordCorrect){
+  throw new ApiError(401, "Old password is not valid")
+}
+user.password=newPassword
+await user.save({ValidateBeforeSave:false})
+return res
+.status(200)
+.json(new ApiResponse(200, {}, "password changed successfully"))
+
+
+
+})
+
+
 
 
 
