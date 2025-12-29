@@ -5,6 +5,7 @@ import {asyncHandler} from "../utils/asyncHandler.js";
 import { cloudinaryUpload } from "../utils/cloudinary.js";
 import { User } from "../models/users.models.js";
 import jwt from "jsonwebtoken"
+import { upload } from "../middlewares/multer.middlewares.js";
 
 //const asyncHandler={asyncHandler}
 const generateAccessAndRefreshToken=async (userId)=>{  
@@ -238,7 +239,96 @@ return res
 
 })
 
+const getCurrentUser=asyncHandler(async(req,res)=>{
+  return res
+  .staus(200)
+  .json(200, req.user, "current User fetched successfully")
+})
 
+const updateAccountDeatils=asyncHandler(async(req,res)=>{
+  const{fullname,email}= req.body
+  if(!fullname || !email){
+    throw new ApiError(400, "username or email is not present")
+  }
+  const user=await User.findByIdAndUpdate(
+    req.user?._id,
+    {
+$set :{
+  fullname:fullname,
+  email:email
+
+}
+    },
+    {
+      new:true,
+       runValidators: true
+    }
+  ).select("-password-refreshToken")
+
+  return res
+  .status(200)
+  .json(new ApiResponse(200,user, "User account details updated successfully"))
+
+
+
+})
+
+const updateUserAvatar=asyncHandler(async(req,res)=>{
+
+const avatarLocalPath=  req.file?.path
+if(!avatarLocalPath){
+  throw new ApiError(401, "avatar local path is missing")
+}
+
+const avatar=await cloudinaryUpload(avatarLocalPath)
+if(!avatar.url){
+  throw new ApiError(401, "Error while uploading avatar local path on cloudinary")
+
+}
+const user=User.findByIdAndUpdate(
+  req.user._id,
+  {
+$set:{
+  avatar:avatar.url
+}
+  },
+  {
+    new:true
+  }
+).select("-password -refreshToken")
+
+return res
+.status(200)
+.json(200, user, "Avatar image uploaded successfully")
+
+})
+
+const updateUserCoverImage=asyncHandler(async(req,res)=>{
+const coverImageLocalPath=req.file?.path
+if(!coverImageLocalPath){
+  throw new ApiError(400, "Cover Image local path is missing")
+}
+const coverImage= await cloudinaryUpload(coverImageLocalPath)
+if(!coverImage){
+  throw new ApiError(400, "error while uploading cover image localpath on cloudinary")
+}
+const user= await User.findByIdAndUpdate(
+  req.user?._id,
+  {
+    $set:{
+      coverImage:coverImage
+    }
+  },
+  {
+    new:true
+  }
+
+).select("-password -refreshToken")
+return res
+.status(200)
+.json(200, user, "Cover Image uploaded successfully")
+
+})
 
 
 
@@ -246,7 +336,13 @@ export {
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDeatils,
+    updateUserAvatar,
+    updateUserCoverImage
+
 
 }
 /*6️⃣ Correct mental model (use this forever)
