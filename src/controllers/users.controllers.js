@@ -16,7 +16,7 @@ const refreshToken=user.generateRefreshToken()
 //iss point tk access and refresh token generate ho chuka h and after hume refresh token ko database mai bhi save karana hoga 
 // so h=that hume baar baar user se nhi maagna pade
 user.refreshToken=refreshToken;
-await user.save({ValidateBeforeSave :false});
+await user.save({validateBeforeSave :false});
 
 
 return {accessToken,refreshToken}
@@ -137,7 +137,7 @@ const {accessToken,refreshToken}= await generateAccessAndRefreshToken(user._id);
     .status(200)
     .cookie("accessToken", accessToken,options)
     .cookie("refreshToken",refreshToken,options)
-    json(
+    .json(
       new ApiResponse(
         200,
         {
@@ -172,13 +172,13 @@ secure:true,
  .clearCookie("accessToken",options)
  .clearCookie("refreshToken",options)
  .json(
-  "User logged out successfully"
+  new ApiResponse(200, {}, "User loggedOut successfully")
  )
 
 })
 
 const refreshAccessToken=asyncHandler(async(req,res)=>{
-const incomingRefreshToken=req.cookie?.refreshToken || req.body
+const incomingRefreshToken=req.cookies?.refreshToken || req.body?.refreshToken
 if(!incomingRefreshToken){
   throw new ApiError(401, "Unauthorised access")
 }
@@ -202,7 +202,7 @@ try {
   status(200)
   .cookie("accessToken", accessToken,options)
     .cookie("refreshToken",newRefreshToken,options)
-    json(
+    .json(
       new ApiResponse(
         200,
       {accessToken, refreshToken: newRefreshToken},
@@ -220,7 +220,7 @@ try {
 })
 
 const changeCurrentPassword=asyncHandler(async(req,res)=>{
-const {oldPaswword, newPassword}=req.body
+const {oldPassword, newPassword}=req.body
 
 const id=req.user?._id
 const user=await User.findById(id)
@@ -241,8 +241,8 @@ return res
 
 const getCurrentUser=asyncHandler(async(req,res)=>{
   return res
-  .staus(200)
-  .json(200, req.user, "current User fetched successfully")
+  .status(200)
+  .json(new ApiResponse(200, req.user, "current User fetched successfully"))
 })
 
 const updateAccountDeatils=asyncHandler(async(req,res)=>{
@@ -263,7 +263,7 @@ $set :{
       new:true,
        runValidators: true
     }
-  ).select("-password-refreshToken")
+  ).select("-password -refreshToken")
 
   return res
   .status(200)
@@ -285,7 +285,7 @@ if(!avatar.url){
   throw new ApiError(401, "Error while uploading avatar local path on cloudinary")
 
 }
-const user=User.findByIdAndUpdate(
+const user= await User.findByIdAndUpdate(
   req.user._id,
   {
 $set:{
@@ -299,7 +299,9 @@ $set:{
 
 return res
 .status(200)
-.json(200, user, "Avatar image uploaded successfully")
+.json( new ApiResponse(
+  200, user, "Avatar image uploaded successfully"
+))
 
 })
 
@@ -316,7 +318,7 @@ const user= await User.findByIdAndUpdate(
   req.user?._id,
   {
     $set:{
-      coverImage:coverImage
+      coverImage:coverImage.url
     }
   },
   {
@@ -326,7 +328,7 @@ const user= await User.findByIdAndUpdate(
 ).select("-password -refreshToken")
 return res
 .status(200)
-.json(200, user, "Cover Image uploaded successfully")
+.json( new ApiResponse( 200, user, "Cover Image uploaded successfully"))
 
 })
 
